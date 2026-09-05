@@ -1,3 +1,237 @@
 # β-Arrestin C-Terminal Tail Contact Analysis
 
-Python scripts for analyzing C-terminal tail contacts in β-arrestin molecular dynamics simulations.
+Python scripts for residue-level analysis of contacts between the C-terminal tail and the protein core of β-arrestins using molecular dynamics (MD) trajectories.
+
+This repository contains separate analysis scripts for **β-arr1 (ARR2)** and **β-arr2 (ARR3)**.
+
+## Overview
+
+These scripts quantify contacts formed between defined regions of the β-arrestin C-terminal tail and residues in the protein core throughout molecular dynamics trajectories.
+
+For each C-terminal region, atom–atom contacts are identified using a distance cutoff of **6 Å (0.6 nm)**. The number of contacts associated with each residue in the reference region is calculated for every trajectory frame and subsequently averaged over the trajectory.
+
+Each C-terminal region is analyzed independently.
+
+## Analyzed Regions
+
+### β-Arrestin-1 (ARR2)
+
+**Reference region:**
+
+- Residues **1–353**
+
+**C-terminal regions:**
+
+- Proximal region: **354–383**
+- Distal region 1: **393–401**
+- Distal region 2: **402–409**
+- Distal region 3: **410–418**
+
+### β-Arrestin-2 (ARR3)
+
+**Reference region:**
+
+- Residues **1–346**
+
+**C-terminal regions:**
+
+- Proximal region: **347–383**
+- Distal region 1: **393–401**
+- Distal region 2: **402–409**
+
+## Contact Analysis
+
+For each trajectory frame, atom pairs between the selected C-terminal region and the reference region are identified using the MDAnalysis `capped_distance` function.
+
+An atom pair is considered to be in contact when the interatomic distance is:
+
+**≤ 6 Å (0.6 nm)**
+
+For each residue in the reference region, the scripts calculate:
+
+- Mean number of atom–atom contacts across the trajectory
+- Standard deviation of the contact count
+- Minimum contact count
+- Maximum contact count
+
+The analysis therefore represents **atom–atom contact counts** rather than binary residue contact frequencies.
+
+## Normalization
+
+For visualization of residue-level contact patterns, the mean contact values are normalized to a **0–1 range** using min–max normalization:
+
+**Normalized contact = (x - xmin) / (xmax - xmin)**
+
+where:
+
+- `x` is the mean atom–atom contact count of a residue
+- `xmin` is the minimum mean contact value
+- `xmax` is the maximum mean contact value
+
+Normalization is performed **independently for each C-terminal region**.
+
+Therefore:
+
+- **0** represents the lowest mean contact value within that analysis
+- **1** represents the highest mean contact value within that analysis
+
+> **Important:** Because each C-terminal region is normalized independently, a normalized value of 1 represents the highest mean contact value within that particular region. It should not be interpreted as an equivalent absolute number of contacts across independently normalized C-terminal regions.
+
+## Output
+
+For each analyzed C-terminal region, two main types of output files are generated.
+
+### CSV Files
+
+The CSV files contain residue-level contact statistics, including:
+
+- Residue number
+- Residue name
+- Mean atom–atom contact count
+- Normalized contact value (0–1)
+- Standard deviation
+- Minimum contact count
+- Maximum contact count
+
+These files can be used for further statistical analysis, plotting, or comparison of residue-level contact profiles.
+
+### PDB Files
+
+The scripts also generate PDB files for structural visualization.
+
+The normalized contact value of each residue in the reference region is written into the **B-factor (Beta) column** of the PDB file.
+
+Residues outside the analyzed reference region are assigned a B-factor value of **0**.
+
+The resulting PDB files can therefore be directly visualized according to their normalized residue-level contact values in molecular visualization software such as **VMD**.
+
+## Visualization in VMD
+
+The generated PDB files can be used to map the normalized C-terminal contact profiles directly onto the β-arrestin structure.
+
+### Loading the Structure
+
+1. Open **VMD**.
+2. Select **File → New Molecule**.
+3. Load the generated `.pdb` file.
+4. Go to **Graphics → Representations**.
+
+### Representation
+
+Under **Drawing Method**, select an appropriate structural representation, for example:
+
+`NewCartoon`
+
+Other representations can also be used depending on the desired visualization.
+
+### Coloring by Contact Value
+
+Under **Coloring Method**, select:
+
+`Beta`
+
+VMD will then color the structure according to the normalized contact values stored in the B-factor column.
+
+The normalized values range from:
+
+- **0 → lowest relative contact level**
+- **1 → highest relative contact level**
+
+Residues outside the reference region have a value of **0**.
+
+### Color Scale
+
+For consistent visualization, use a color scale range of:
+
+`0 – 1`
+
+This ensures that the structural coloring corresponds directly to the normalized contact values generated by the scripts.
+
+The resulting color map highlights residues exhibiting relatively higher or lower levels of C-terminal atom–atom contacts within the corresponding analysis.
+
+> **Note:** The color map represents relative contact levels and should not be interpreted as interaction energies or binding strengths.
+
+Because each C-terminal region is independently normalized, comparisons of the spatial contact patterns between structures or regions should take this normalization procedure into account.
+
+## Scripts
+
+### `arr2_ctail_contact_analysis.py`
+
+Performs C-terminal tail contact analysis for **β-arr1 (ARR2)**.
+
+**Reference region:**
+
+`1–353`
+
+**C-terminal regions:**
+
+`354–383`, `393–401`, `402–409`, and `410–418`
+
+### `arr3_ctail_contact_analysis.py`
+
+Performs C-terminal tail contact analysis for **β-arr2 (ARR3)**.
+
+**Reference region:**
+
+`1–346`
+
+**C-terminal regions:**
+
+`347–383`, `393–401`, and `402–409`
+
+## Requirements
+
+The scripts require:
+
+- Python 3
+- MDAnalysis
+- NumPy
+- pandas
+
+The required packages can be installed using:
+
+```bash
+pip install MDAnalysis numpy pandas
+```
+
+## Usage
+
+The scripts are designed to analyze molecular dynamics trajectories stored as multi-model PDB files.
+
+Specify the input trajectory and output directory at the beginning of the corresponding script.
+
+For example:
+
+```python
+trajectory_pdb = "your_trajectory.pdb"
+output_directory = "outputs"
+```
+
+### Run β-Arr1 Analysis
+
+```bash
+python arr2_ctail_contact_analysis.py
+```
+
+### Run β-Arr2 Analysis
+
+```bash
+python arr3_ctail_contact_analysis.py
+```
+
+The output directory will contain separate CSV and PDB files for each analyzed C-terminal region.
+
+## Method Summary
+
+The analysis workflow consists of:
+
+1. Loading the molecular dynamics trajectory using MDAnalysis.
+2. Defining the protein-core reference region.
+3. Defining individual C-terminal regions.
+4. Identifying atom pairs within **6 Å** for every trajectory frame.
+5. Calculating residue-level atom–atom contact counts.
+6. Averaging the contact counts across the trajectory.
+7. Calculating the standard deviation, minimum, and maximum contact counts.
+8. Independently normalizing mean contact values for each C-terminal region to **0–1**.
+9. Exporting residue-level statistics as CSV files.
+10. Writing normalized contact values into the PDB B-factor column for structural visualization in VMD.
